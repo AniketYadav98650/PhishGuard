@@ -1,0 +1,390 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyze SMS | PhishGuard</title>
+    <link rel="stylesheet" href="{% static 'website/css/style.css' %}">
+</head>
+<body>
+
+<header class="navbar">
+    <a href="{% url 'home' %}" class="brand" aria-label="PhishGuard homepage">
+        <span class="brand-icon">🛡️</span>
+        <span>PhishGuard</span>
+    </a>
+
+    <nav class="nav-links" aria-label="Main navigation">
+        <a class="optional-link" href="{% url 'home' %}">Home</a>
+        <span class="nav-user">Hi, {{ user.username }}</span>
+
+        <form method="post" action="{% url 'logout' %}" class="nav-logout-form">
+            {% csrf_token %}
+            <button type="submit" class="nav-logout-button">Log Out</button>
+        </form>
+    </nav>
+</header>
+
+<main class="auth-container">
+    <section class="auth-card">
+
+        <h1>Analyze a suspicious SMS</h1>
+
+        <p class="auth-description">
+            Submit a text message to our AI model to check whether
+            it resembles spam. Results are predictions, not proof.
+        </p>
+
+        <form method="post" class="auth-form"
+              autocomplete="off" id="sms-analysis-form">
+
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="sender_phone">
+                    Sender's phone number (optional)
+                </label>
+
+                <input
+                    type="tel"
+                    id="sender_phone"
+                    name="sender_phone"
+                    placeholder="Example: +1 555 123 4567"
+                    value="{{ sender_phone }}"
+                    autocomplete="tel"
+                >
+
+                <small>
+                    Enter the sender's number if you want to report it later.
+                </small>
+            </div>
+
+            <!-- Context-aware sender identity -->
+            <div class="form-group">
+                <label for="sender_identity">
+                    Who sent this message?
+                </label>
+
+                <select
+                    id="sender_identity"
+                    name="sender_identity"
+                    required
+                >
+                    <option value="known_contact"
+                        {% if sender_identity == "known_contact" %}selected{% endif %}>
+                        Known contact
+                    </option>
+
+                    <option value="recognized_organization"
+                        {% if sender_identity == "recognized_organization" %}selected{% endif %}>
+                        Recognized organization
+                    </option>
+
+                    <option value="unknown"
+                        {% if sender_identity == "unknown" or not sender_identity %}selected{% endif %}>
+                        Unknown sender
+                    </option>
+                </select>
+
+                <small>
+                    Choose how you recognize the sender.
+                    This does not independently verify their identity.
+                </small>
+            </div>
+
+            <!-- Context-aware expected message -->
+            <div class="form-group">
+                <label for="expected_message">
+                    Were you expecting this message?
+                </label>
+
+                <select
+                    id="expected_message"
+                    name="expected_message"
+                    required
+                >
+                    <option value="yes"
+                        {% if expected_message == "yes" %}selected{% endif %}>
+                        Yes
+                    </option>
+
+                    <option value="no"
+                        {% if expected_message == "no" %}selected{% endif %}>
+                        No
+                    </option>
+
+                    <option value="not_sure"
+                        {% if expected_message == "not_sure" or not expected_message %}selected{% endif %}>
+                        Not sure
+                    </option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="message">SMS message</label>
+
+                <textarea
+                    id="message"
+                    name="message"
+                    rows="7"
+                    placeholder="Paste the suspicious SMS here..."
+                    required
+                >{{ message }}</textarea>
+            </div>
+
+            <button type="submit" class="auth-button">
+                Analyze SMS
+            </button>
+
+        </form>
+
+        {% if error %}
+            <div class="auth-error" role="alert">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        {% if result %}
+
+            <div class="sms-result">
+
+                <h2>Analysis result</h2>
+
+                <p>
+                    Prediction:
+                    <strong>{{ result.label }}</strong>
+                </p>
+
+                <p>
+                    Model confidence:
+                    <strong>{{ result.confidence_percent }}%</strong>
+                </p>
+
+                <!-- LIME explanation -->
+                <div class="lime-explanation">
+
+                    <h3>Why was this message flagged?</h3>
+
+                    <p class="lime-intro">
+                        Our AI examined the words in your message
+                        to understand what influenced its prediction.
+                    </p>
+
+                    <div class="lime-word-section">
+                        <h4>Words that increased the {{ result.label }} prediction</h4>
+
+                        <div class="lime-word-tags">
+                            {% for feature in result.lime_features %}
+                                {% if feature.direction == "supports" %}
+                                    <span class="lime-word lime-positive">
+                                        {{ feature.word }}
+                                    </span>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="lime-word-section">
+                        <h4>Words that reduced the {{ result.label }} prediction</h4>
+
+                        <div class="lime-word-tags">
+                            {% for feature in result.lime_features %}
+                                {% if feature.direction == "opposes" %}
+                                    <span class="lime-word lime-negative">
+                                        {{ feature.word }}
+                                    </span>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="lime-summary">
+                        <h4>What does this mean?</h4>
+
+                        <p>
+                            Words shown in green influenced the AI toward
+                            a <strong>{{ result.label }}</strong> prediction.
+                            Words shown in red influenced it in the
+                            opposite direction.
+                        </p>
+                    </div>
+
+                    <p class="lime-disclaimer">
+                        This explanation shows which words influenced the AI.
+                        It does not prove that a message is fraudulent or safe.
+                    </p>
+
+                </div>
+
+                <!-- Context-aware assessment -->
+                {% if result.context_analysis %}
+
+                    <div class="context-analysis">
+
+                        <h3>Message Context Analysis</h3>
+
+                        <p>
+                            <strong>Contextual assessment:</strong>
+                            {{ result.context_analysis.level }}
+                        </p>
+
+                        <div class="context-detail">
+                            <p>
+                                <strong>Sender identity:</strong>
+                                {{ result.context_analysis.sender_identity_label }}
+                            </p>
+
+                            <p>
+                                <strong>Expected message:</strong>
+                                {{ result.context_analysis.expected_message_label }}
+                            </p>
+                        </div>
+
+                        <h4>Contextual findings</h4>
+
+                        <ul>
+                            {% for finding in result.context_analysis.findings %}
+                                <li>{{ finding }}</li>
+                            {% endfor %}
+                        </ul>
+
+                        {% if result.url_analysis.urls_found %}
+                            <h4>Detected URLs</h4>
+
+                            <ul>
+                                {% for url in result.url_analysis.urls %}
+                                    <li>{{ url }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+
+                        <p class="context-disclaimer">
+                            Contextual findings are indicators for further
+                            investigation, not proof of fraud. A link with
+                            no detected warning signs is not guaranteed safe.
+                        </p>
+
+                    </div>
+
+                {% endif %}
+
+                <!-- Existing community reporting functionality -->
+
+                <!-- Community reporting functionality -->
+                {% if result.prediction == 1 %}
+
+                    {% if sender_phone %}
+
+                        <p>
+                            You can report the sender's number if you believe
+                            this message is spam.
+                        </p>
+
+                        <form method="post" action="{% url 'report_number' %}">
+                            {% csrf_token %}
+
+                            <input
+                                type="hidden"
+                                name="sender_phone"
+                                value="{{ sender_phone }}"
+                            >
+
+                            <input
+                                type="hidden"
+                                name="message"
+                                value="{{ message }}"
+                            >
+
+                            <div class="form-group">
+                                <label for="scam_category">
+                                    Scam category
+                                </label>
+
+                                <select
+                                    id="scam_category"
+                                    name="scam_category"
+                                    required
+                                >
+                                    <option value="">Select scam category</option>
+                                    <option value="bank_impersonation">
+                                        Bank impersonation
+                                    </option>
+                                    <option value="prize_lottery">
+                                        Prize or lottery scam
+                                    </option>
+                                    <option value="phishing">
+                                        Phishing or suspicious link
+                                    </option>
+                                    <option value="payment_financial">
+                                        Payment or financial scam
+                                    </option>
+                                    <option value="delivery_package">
+                                        Delivery or package scam
+                                    </option>
+                                    <option value="other">
+                                        Other
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        name="share_message"
+                                        value="on"
+                                    >
+                                    I agree to share this SMS publicly
+                                    to help warn other users.
+                                </label>
+
+                                <small>
+                                    This is optional. If you leave this
+                                    unchecked, your message will remain
+                                    private while your report still
+                                    contributes to the community report count.
+                                    Please remove personal information,
+                                    verification codes, and sensitive details
+                                    before agreeing to share.
+                                </small>
+                            </div>
+
+                            <button type="submit" class="auth-button">
+                                Report This Number
+                            </button>
+                        </form>
+
+                    {% else %}
+
+                        <p>
+                            Enter the sender's phone number above to prepare
+                            a community report.
+                        </p>
+
+                    {% endif %}
+
+                {% endif %}
+
+
+
+                <p class="auth-description">
+                    This model was trained on SMS spam data. It may
+                    miss harmful messages or incorrectly flag legitimate
+                    ones. A Not Spam result does not guarantee safety.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+        <p class="auth-footer">
+            <a href="{% url 'home' %}">Back to Home</a>
+        </p>
+
+    </section>
+</main>
+
+</body>
+</html>

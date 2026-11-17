@@ -1,0 +1,394 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Check suspicious phone numbers and help your community identify potential SMS spam with PhishGuard.">
+    <title>PhishGuard — Check Before You Trust</title>
+
+    <link rel="stylesheet" href="{% static 'website/css/style.css' %}">
+</head>
+
+<body>
+    <div class="announcement">
+        <span>●</span>
+        Helping people make more informed decisions about suspicious messages
+    </div>
+
+    <header class="navbar">
+        <a href="/" class="brand" aria-label="PhishGuard homepage">
+            <span class="brand-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round"
+                     stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11z"/>
+                    <path d="m9 12 2 2 4-4"/>
+                </svg>
+            </span>
+            <span>Phish<strong>Guard</strong></span>
+        </a>
+
+      <nav class="nav-links" aria-label="Main navigation">
+         <a class="optional-link" href="#how-it-works">How it works</a>
+         <a class="optional-link" href="#features">Features</a>
+          <a class="nav-cta" href="{% url 'analyze_sms' %}">Analyze SMS</a>
+
+    {% if user.is_authenticated %}
+        <span class="nav-user">Hi, {{ user.username }}</span>
+
+        <a class="nav-cta" href="{% url 'home' %}">Home</a>
+
+        <form method="post" action="{% url 'logout' %}" class="nav-logout-form">
+            {% csrf_token %}
+            <button type="submit" class="nav-logout-button">Log Out</button>
+        </form>
+    {% else %}
+        <a class="nav-cta" href="#number-search">Check a number</a>
+        <a class="optional-link" href="{% url 'login' %}">Log In</a>
+        <a class="nav-cta" href="{% url 'register' %}">Sign Up</a>
+    {% endif %}
+</nav>
+    </header>
+    {% if messages %}
+    <div class="messages-container" role="status" aria-live="polite">
+        {% for message in messages %}
+            <div class="message-alert {{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+    <main>
+        <section class="hero" id="number-search">
+            <div class="hero-content">
+                <div class="eyebrow">
+                    <span class="status-dot"></span>
+                    Community-powered message awareness
+                </div>
+
+                <h1>
+                    That message looks suspicious.
+                    <span class="highlight">Let's check.</span>
+                </h1>
+
+                <p class="hero-description">
+                    Search a phone number to see whether people have reported it.
+                    If it is not in our database, you can use our AI-powered
+                    message analysis to investigate further.
+                </p>
+
+                <!-- Django phone-number search form -->
+                <form
+                    class="search-card"
+                    id="number-search-form"
+                    method="post"
+                    action="/"
+                >
+                    {% csrf_token %}
+
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round"
+                         aria-hidden="true">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="m21 21-4.35-4.35"/>
+                    </svg>
+
+                    <label for="country-code" class="visually-hidden">
+                        Select country
+                    </label>
+
+                    <select
+                        class="country-select"
+                        id="country-code"
+                        name="country_code"
+                        aria-label="Country calling code"
+                        required
+                    >
+                        {% for country in countries %}
+                            <option
+                                value="{{ country.region }}"
+                                {% if country.region == selected_region %}selected{% endif %}
+                            >
+                                {{ country.name }} (+{{ country.code }})
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <label for="phone-number" class="visually-hidden">
+                        Phone number
+                    </label>
+
+                    <input
+                        type="tel"
+                        id="phone-number"
+                        name="phone_number"
+                        placeholder="Enter phone number"
+                        aria-label="Phone number to check"
+                        autocomplete="tel-national"
+                        value="{{ phone_number|default:'' }}"
+                        required
+                    >
+
+                    <button type="submit" class="search-button">
+                        Check number →
+                    </button>
+                </form>
+
+                <p class="search-hint">
+                    Search without creating an account. No reports found does
+                    not mean a number is safe.
+                </p>
+
+
+                <!-- Search results -->
+                {% if error %}
+                    <div class="search-message error" role="alert">
+                        <div class="message-title">
+                            <span class="message-symbol">!</span>
+                            <strong>Check your phone number</strong>
+                        </div>
+                        {{ error }}
+                    </div>
+
+                {% elif searched and number_found %}
+                    <div class="search-message found" role="status">
+                        <div class="message-title">
+                            <span class="message-symbol">✓</span>
+                            <strong>Number found in our database</strong>
+                        </div>
+
+                        <p>
+                            The number
+                            <strong>{{ phone_number }}</strong>
+                            has {{ report_count }} recorded report(s).
+                        </p>
+
+                        <p>
+                            <strong>Unique community reporters:</strong>
+                            {{ unique_reporters }}
+                        </p>
+
+                        <p class="result-note">
+                            Community reports are not definitive proof that a
+                            number is malicious. Be cautious with unexpected
+                            messages and requests for sensitive information.
+                        </p>
+                    </div>
+
+                    {% if scam_categories %}
+                        <div class="search-message found">
+                            <h3>Community scam categories</h3>
+
+                            <ul>
+                                {% for category in scam_categories %}
+                                    <li>
+                                        {{ category.label }}:
+                                        <strong>{{ category.count }}</strong>
+                                        report(s)
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+
+                    {% if shared_messages %}
+                        <div class="search-message found">
+                            <h3>Community-shared SMS examples</h3>
+
+                            <p class="result-note">
+                                These messages were voluntarily shared
+                                by community reporters.
+                            </p>
+
+                            {% for report in shared_messages %}
+                                <div class="community-message">
+                                    <p>{{ report.message|linebreaksbr }}</p>
+                                    <small>
+                                        Category:
+                                        {{ report.get_scam_category_display }}
+                                    </small>
+                                    <br>
+                                    <small>
+                                        Reported:
+                                        {{ report.created_at|date:"M d, Y" }}
+                                    </small>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    {% if recent_reports %}
+                        <div class="search-message found">
+                            <h3>Recent reporting activity</h3>
+
+                            <ul>
+                                {% for report in recent_reports %}
+                                    <li>
+                                        {{ report.get_scam_category_display }}
+                                        — {{ report.created_at|date:"M d, Y" }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+
+                {% elif searched %}
+                    <div class="search-message not-found" role="status">
+                        <div class="message-title">
+                            <span class="message-symbol">?</span>
+                            <strong>No reports found for this number</strong>
+                        </div>
+
+                        <p>
+                            We couldn't find this number in our database.
+                            That does not mean it is safe.
+                        </p>
+
+                        <p class="result-note">
+                            Have a suspicious SMS? The next step will let you
+                            create an account and analyze the message with our
+                            AI model.
+                        </p>
+                    </div>
+                {% endif %}
+
+
+                <div class="trust-row">
+                    <div class="trust-item">
+                        <span class="check">✓</span>
+                        Public number lookup
+                    </div>
+                    <div class="trust-item">
+                        <span class="check">✓</span>
+                        AI message analysis
+                    </div>
+                    <div class="trust-item">
+                        <span class="check">✓</span>
+                        Community reports
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="features">
+            <div class="section-heading">
+                <h2>One suspicious message. A smarter next step.</h2>
+                <p>
+                    PhishGuard brings community reports and message analysis
+                    together to help you decide what to do next.
+                </p>
+            </div>
+
+            <div class="feature-grid">
+                <article class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="1.8"
+                             stroke-linecap="round" stroke-linejoin="round"
+                             aria-hidden="true">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="m21 21-4.35-4.35"/>
+                        </svg>
+                    </div>
+                    <h3>Look up a number</h3>
+                    <p>
+                        Search without signing up and see whether our community
+                        database contains reports about a phone number.
+                    </p>
+                </article>
+
+                <article class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="1.8"
+                             stroke-linecap="round" stroke-linejoin="round"
+                             aria-hidden="true">
+                            <path d="M12 3 4 7v5c0 5 3.5 8 8 9 4.5-1 8-4 8-9V7l-8-4z"/>
+                            <path d="m9 12 2 2 4-4"/>
+                        </svg>
+                    </div>
+                    <h3>Analyze with AI</h3>
+                    <p>
+                        Submit a suspicious SMS for an AI-based spam prediction
+                        when a number lookup alone cannot answer your question.
+                    </p>
+                </article>
+
+                <article class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="1.8"
+                             stroke-linecap="round" stroke-linejoin="round"
+                             aria-hidden="true">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                    </div>
+                    <h3>Help others stay aware</h3>
+                    <p>
+                        Registered users can report a suspicious sender after
+                        analysis, helping future visitors see community reports.
+                    </p>
+                </article>
+            </div>
+        </section>
+
+        <section class="section steps-section" id="how-it-works">
+            <div class="section-heading">
+                <h2>How PhishGuard works</h2>
+                <p>Three simple steps to investigate a suspicious message.</p>
+            </div>
+
+            <div class="steps">
+                <article class="step">
+                    <div class="step-number">01</div>
+                    <h3>Search the number</h3>
+                    <p>
+                        Check whether our database already contains community
+                        reports.
+                    </p>
+                </article>
+
+                <article class="step">
+                    <div class="step-number">02</div>
+                    <h3>Analyze the message</h3>
+                    <p>
+                        If needed, sign in and submit the SMS for an AI prediction.
+                    </p>
+                </article>
+
+                <article class="step">
+                    <div class="step-number">03</div>
+                    <h3>Share a report</h3>
+                    <p>
+                        If spam is detected, report the sender to inform future
+                        searches.
+                    </p>
+                </article>
+            </div>
+        </section>
+
+        <aside class="disclaimer">
+            <strong>A quick reminder:</strong>
+            AI predictions and community reports can be wrong.
+            Phone numbers may be spoofed or reassigned. Do not share passwords,
+            verification codes, or payment information with suspicious senders.
+        </aside>
+    </main>
+
+    <footer>
+        <div class="footer-inner">
+            <a href="/" class="footer-brand">Phish<span>Guard</span></a>
+            <p class="footer-copy">
+                Community-powered awareness. Think before you click.
+            </p>
+            <p class="footer-copy">© 2026 PhishGuard</p>
+        </div>
+    </footer>
+</body>
+</html>
