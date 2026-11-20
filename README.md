@@ -96,7 +96,9 @@ Before running the project, make sure you have installed:
 - pip (Python package installer)
 - Git
 
-Use a Python version compatible with the packages listed in `requirements.txt`.
+Python compatibility: Use Python 3.12 or newer, with a version supported by all packages in requirements.txt. The application and complete 22-test suite were successfully executed on Windows using Python 3.14.
+
+Git is required for cloning the repository but is optional when downloading the project as a ZIP file.
 
 ## 7. Installation and Setup
 
@@ -104,13 +106,13 @@ Follow these steps to download and run PhishGuard on your computer.
 
 ### Step 1: Clone the GitHub repository
 
-```bash
+```
 git clone https://github.com/AniketYadav98650/PhishGuard.git
 ```
 
 ### Step 2: Navigate to the project directory
 
-```bash
+```
 cd PhishGuard
 ```
 
@@ -118,25 +120,29 @@ cd PhishGuard
 
 For Windows PowerShell:
 
-```powershell
+```
 python -m venv .venv
 ```
 
 ### Step 4: Activate the virtual environment
 
-```powershell
+Windows: 
+
+```
 .venv\Scripts\Activate.ps1
 ```
 
 If PowerShell blocks script execution, you can use Command Prompt instead:
 
-```cmd
+```
 .venv\Scripts\activate.bat
 ```
 
+Once activated, you should see (.venv) at the beginning of your terminal prompt.
+
 ### Step 5: Install the required dependencies
 
-```powershell
+```
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
@@ -147,7 +153,7 @@ This installs the Python packages required by the application.
 
 Run the following command:
 
-```powershell
+```
 python manage.py migrate
 ```
 
@@ -155,7 +161,7 @@ Django will create the local SQLite database and apply the required database mig
 
 ### Step 7: Start the application
 
-```powershell
+```
 python manage.py runserver
 ```
 
@@ -164,6 +170,18 @@ Open your browser and visit:
 http://127.0.0.1:8000/
 
 The PhishGuard homepage should now appear.
+
+**Alternative Development Server Port**
+
+If port 8000 is unavailable or access is denied, run:
+
+```bash
+python manage.py runserver 127.0.0.1:8080
+```
+
+Then open http://127.0.0.1:8080/ in your browser.
+
+To stop the development server, press Ctrl + C in the terminal.
 
 ## 8. NLTK Resource Setup
 
@@ -185,25 +203,69 @@ No separate manual NLTK download command is required.
 
 PhishGuard includes automated tests for important application functionality.
 
-To execute the website test suite, run:
+The current project test suite contains **22 automated tests**, covering unit-level and component-level functionality.
+The 22 automated tests are organized into three test modules. Each module can be executed independently to verify a specific testing category.
 
-```powershell
-python manage.py test website
+### Test Summary
+
+| Test Type | Test Module | Number of Tests |
+|---|---|---:|
+| Unit Testing | `test_unit_reporting` | 12 |
+| Component Testing – Community Reporting | `test_component_reporting` | 6 |
+| Component Testing – SMS Analysis | `test_component_sms_analysis` | 4 |
+| **Total** | | **22** |
+
+All 22 automated tests were successfully executed together on Windows using Python 3.14.
+
+## Unit Testing
+
+Run the following command to execute the 12 unit tests:
+
+```
+python manage.py test website.tests.test_unit_reporting -v 2
 ```
 
-The current project test suite contains **22 automated tests**, covering unit-level and component-level functionality.
+These tests cover phone number normalization, validation rules, consent handling, and database uniqueness constraints.
+
+## Component Testing — Community Reporting
+
+Run the following command to execute the 6 community reporting component tests:
+
+```
+python manage.py test website.tests.test_component_reporting -v 2
+```
+
+These tests verify interactions within the community scam reporting workflow.
+
+## Component Testing — SMS Analysis
+
+Run the following command to execute the 4 SMS analysis component tests:
+
+```
+python manage.py test website.tests.test_component_sms_analysis -v 2
+```
+
+These tests verify interactions within the SMS analysis workflow.
+
+## Complete Test Suite
+
+To execute all 22 tests together:
+
+```
+python manage.py test website
+```
 
 ### Additional Django checks
 
 To check the application for configuration issues:
 
-```powershell
+```
 python manage.py check
 ```
 
 To check whether database model changes require new migrations:
 
-```powershell
+```
 python manage.py makemigrations --check --dry-run
 ```
 
@@ -265,7 +327,7 @@ PhishGuard uses SQLite as its default database.
 
 The database is created locally when the following command is executed:
 
-```powershell
+```
 python manage.py migrate
 ```
 
