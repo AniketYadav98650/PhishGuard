@@ -1,34 +1,36 @@
-# PhishGuard -- Intelligent Spam Message Detection
+# PhishGuard – Intelligent Spam Message Detection
 
-PhishGuard is a Django web application for analyzing suspicious SMS
-messages and URLs, explaining predictions, and supporting community
-reporting and lookup of suspicious phone numbers. A Chrome browser
-extension provides an additional way to submit message text for
-analysis.
+PhishGuard is a Django-based web application designed to identify suspicious SMS messages and URLs. It provides spam classification, prediction confidence scores, LIME-based explanations, phone-number lookup, and community scam reporting. A Chrome browser extension also allows users to submit message text for analysis through the PhishGuard API.
 
-**Repository:** https://github.com/AniketYadav98650/PhishGuard\
-**Branch:** `main`\
-**Team:** Aniket Kumar Yadav and Sahana Puri
+**Repository:** [PhishGuard – GitHub](https://github.com/AniketYadav98650/PhishGuard)  
+**Branch:** `main`  
+**Team Members:** Aniket Kumar Yadav and Sahana Puri
 
-## Features
+---
 
--   SMS classification as **Spam** or **Not Spam**, with a confidence
-    score.
--   URL analysis for links found in submitted messages.
--   LIME-based explanations of supported predictions.
--   Phone-number lookup and community scam reporting.
--   User registration and login.
--   Chrome extension for submitting message text to the PhishGuard
-    analysis API.
+## 1. Project Features
 
-## Technologies
+- **SMS Classification:** Classifies submitted messages as Spam or Not Spam and provides a confidence score.
+- **URL Analysis:** Analyzes URLs found in submitted messages.
+- **Prediction Explanations:** Uses LIME to explain supported model predictions.
+- **Phone-Number Lookup:** Provides lookup functionality for suspicious phone numbers.
+- **Community Scam Reporting:** Allows users to submit scam reports.
+- **User Authentication:** Supports user registration and login.
+- **Chrome Browser Extension:** Provides an additional interface for submitting message text to the PhishGuard analysis API.
 
-Python · Django · SQLite · HTML · CSS · JavaScript · scikit-learn ·
-TF-IDF · NLTK · LIME
+## 2. Technologies Used
 
-## Project Structure
+- **Backend:** Python, Django
+- **Frontend:** HTML, CSS, JavaScript
+- **Machine Learning:** scikit-learn, TF-IDF
+- **Natural Language Processing:** NLTK
+- **Explainable AI:** LIME
+- **Database:** SQLite
+- **Browser Extension:** Chrome Extension APIs
 
-``` text
+## 3. Project Structure
+
+```text
 PhishGuard/
 ├── accounts/
 ├── config/
@@ -43,146 +45,173 @@ PhishGuard/
 └── requirements.txt
 ```
 
-The trained `model.pkl` and `vectorizer.pkl` files are required for SMS
-classification and should be located in the project root alongside
-`sms_classifier.py`.
+The trained `model.pkl` and `vectorizer.pkl` files are required for SMS classification. They should remain in the project root alongside `sms_classifier.py`.
 
-## Installation and Run Instructions
+## 4. Requirements
 
-The following commands use Windows PowerShell. Run them from the project
-directory containing `manage.py`.
+- Python installed on your system
+- pip package manager
+- Google Chrome (for the browser extension)
+- Git (to clone the repository)
 
-### 1. Clone the repository
+## 5. Installation and Setup
 
-``` powershell
+The following instructions use Windows PowerShell. Run the commands from the project directory containing `manage.py`.
+
+### Step 1: Clone the repository
+
+```powershell
 git clone https://github.com/AniketYadav98650/PhishGuard.git
 cd PhishGuard
 ```
 
-### 2. Create and activate a virtual environment
+### Step 2: Create and activate a virtual environment
 
-``` powershell
+```powershell
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 ```
 
-If PowerShell blocks activation, use Command Prompt:
+If PowerShell blocks script execution, use Command Prompt instead:
 
-``` bat
+```cmd
 .venv\Scripts\activate.bat
 ```
 
-### 3. Install dependencies and prepare the database
+### Step 3: Install dependencies
 
-``` powershell
+```powershell
 python -m pip install --upgrade pip
 pip install -r requirements.txt
+```
+
+### Step 4: Prepare the database
+
+```powershell
 python manage.py migrate
 ```
 
-### 4. Start the application
+### Step 5: Start the development server
 
-``` powershell
+```powershell
 python manage.py runserver
 ```
 
-Open <http://127.0.0.1:8000/> in your browser. Press `Ctrl + C` in the
-terminal to stop the server.
+Open the application in your browser:
 
-## Chrome Browser Extension
+http://127.0.0.1:8000/
 
-1.  Start the PhishGuard Django application.
-2.  Open Chrome and navigate to `chrome://extensions/`.
-3.  Enable **Developer mode**.
-4.  Select **Load unpacked**.
-5.  Choose the `browser_extension` folder in the cloned repository.
-6.  Open the PhishGuard extension popup and submit message text for
-    analysis.
+To stop the development server, press `Ctrl + C` in the terminal.
 
-Keep the Django application running while using the extension.
+## 6. Chrome Browser Extension Setup
 
-## Automated Testing
+1. Start the PhishGuard Django application.
+2. Open Google Chrome.
+3. Navigate to `chrome://extensions/`.
+4. Enable **Developer mode**.
+5. Click **Load unpacked**.
+6. Select the `browser_extension` folder from the cloned repository.
+7. Open the PhishGuard extension and submit message text for analysis.
 
-PhishGuard's automated tests are organized into three levels. The latest
-recorded full-suite run passed **40 tests**: 12 unit tests, 24 component
-tests, and 4 system workflow tests.
+**Note:** Keep the Django development server running while using the extension.
 
-Run commands from the directory containing `manage.py`, with the virtual
-environment activated.
+## 7. Automated Testing
 
-### Unit tests --- 12 tests
+The automated test suite is organized into three testing levels:
 
-These tests check individual functions and business rules, including
-phone-number normalization, validation, consent handling, and
-duplicate-report protection.
+- Unit testing
+- Component testing
+- System testing
 
-``` powershell
+The latest recorded full-suite execution passed **40 tests**, consisting of 12 unit tests, 24 component tests, and 4 system workflow tests.
+
+Run the following commands from the project directory with the virtual environment activated.
+
+### 7.1 Unit Tests – 12 Tests
+
+These tests cover individual functions and business rules, including phone-number normalization, validation, consent handling, and duplicate-report protection.
+
+```powershell
 python manage.py test website.tests.test_unit_reporting -v 2
 ```
 
-### Component tests --- 24 tests across 6 components
+### 7.2 Component Tests – 24 Tests
 
-Component tests verify how related parts of each feature work together.
+Component tests verify the interaction of related parts within individual application features.
 
-  -----------------------------------------------------------------------------------------------------------------------------
-  Component                                    Tests Command
-  --------------------- ---------------------------- --------------------------------------------------------------------------
-  Authentication                                   3 `python manage.py test website.tests.test_component_authentication -v 2`
+| Component | Tests | Command |
+|---|---:|---|
+| Authentication | 3 | `python manage.py test website.tests.test_component_authentication -v 2` |
+| Browser Extension Analysis API | 4 | `python manage.py test website.tests.test_component_extension_api -v 2` |
+| Phone-Number Lookup | 3 | `python manage.py test website.tests.test_component_phone_lookup -v 2` |
+| Community Reporting | 6 | `python manage.py test website.tests.test_component_reporting -v 2` |
+| SMS Analysis | 5 | `python manage.py test website.tests.test_component_sms_analysis -v 2` |
+| URL Analysis | 3 | `python manage.py test website.tests.test_component_url_analysis -v 2` |
+| **Total** | **24** | |
 
-  Browser extension                                4 `python manage.py test website.tests.test_component_extension_api -v 2`
-  analysis API                                       
+### 7.3 System Tests – 4 Workflow Tests
 
-  Phone-number lookup                              3 `python manage.py test website.tests.test_component_phone_lookup -v 2`
+These tests exercise complete application workflows, including:
 
-  Community reporting                              6 `python manage.py test website.tests.test_component_reporting -v 2`
+- SMS analysis workflow.
+- Community reporting and phone-number lookup workflow.
+- Invalid and duplicate report handling.
+- Browser-extension analysis API workflow.
 
-  SMS analysis                                     5 `python manage.py test website.tests.test_component_sms_analysis -v 2`
+Run the system tests:
 
-  URL analysis                                     3 `python manage.py test website.tests.test_component_url_analysis -v 2`
-  -----------------------------------------------------------------------------------------------------------------------------
-
-### System tests --- 4 workflow tests
-
-These tests exercise complete workflows, including SMS analysis,
-community reporting and lookup, invalid or duplicate reports, and the
-browser-extension analysis API.
-
-``` powershell
+```powershell
 python manage.py test website.tests.test_system_workflows -v 2
 ```
 
-### Run the complete test suite
+### 7.4 Run the Complete Test Suite
 
-Run all unit, component, and system tests together:
+To execute all unit, component, and system tests:
 
-``` powershell
+```powershell
 python manage.py test -v 2
 ```
 
 The latest recorded result was:
 
-``` text
+```text
 Ran 40 tests
 OK
 ```
 
-To check the Django project configuration:
+### 7.5 Additional Django Checks
 
-``` powershell
+Check the Django project configuration:
+
+```powershell
 python manage.py check
 ```
 
-**Testing limitation:** Some system workflow tests mock services or
-component boundaries. Passing tests verify the tested code paths; they
-do not measure live model accuracy or replace manual testing of the
-Chrome extension in a browser.
+**Testing Limitation:** Some system workflow tests mock services or component boundaries. Passing automated tests verify the tested code paths; they do not measure live machine-learning accuracy or replace manual testing of the Chrome extension in a browser.
 
-## Notes
+## 8. Machine Learning Model Files
 
--   Run Django commands from the directory containing `manage.py`.
--   Keep the virtual environment activated when installing dependencies
-    or running the project.
--   An internet connection may be needed if required NLTK resources are
-    not already installed.
--   Do not commit virtual environments, secrets, or machine-specific
-    local database files.
+The application uses the following files for SMS classification:
+
+- `model.pkl` – Trained machine-learning model.
+- `vectorizer.pkl` – Fitted TF-IDF vectorizer.
+- `sms_classifier.py` – Python module responsible for SMS classification.
+
+Ensure these files are available in the project root before running the application.
+
+## 9. Database Information
+
+PhishGuard uses SQLite as its development database. Django migrations create and update the database schema.
+
+Run the following command whenever database migrations need to be applied:
+
+```powershell
+python manage.py migrate
+```
+
+## 10. Additional Notes
+
+- Run Django management commands from the directory containing `manage.py`.
+- Activate the virtual environment before installing dependencies or running the application.
+- An internet connection may be required if necessary NLTK resources are not already installed.
+- Do not commit virtual environments, passwords, secret keys, or machine-specific local database files to the public repository.
