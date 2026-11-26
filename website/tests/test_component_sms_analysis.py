@@ -144,3 +144,57 @@ class SMSAnalysisComponentTests(TestCase):
             "could not be generated",
             result["lime_summary"]
         )
+
+    # C2-T05: Legitimate SMS classification and database persistence
+    @patch("phishguard.lime_explanations.summarize_lime_explanation")
+    @patch("phishguard.lime_explanations.explain_prediction")
+    @patch("website.views.analyze_urls")
+    @patch("sms_classifier.analyze_sms")
+    def test_legitimate_sms_is_classified_and_saved(
+        self,
+        mock_analyze_sms,
+        mock_analyze_urls,
+        mock_explain,
+        mock_summary
+    ):
+        mock_analyze_sms.return_value = {
+            "prediction": 0,
+            "label": "Not Spam",
+            "confidence": 0.97,
+        }
+
+        mock_analyze_urls.return_value = {
+            "urls_found": False,
+            "urls": [],
+            "findings": [],
+            "risk_level": "No URL detected",
+        }
+
+        mock_explain.return_value = [("meeting", 0.35)]
+        mock_summary.return_value = (
+            "The message contains ordinary conversational language."
+        )
+
+        response = self.client.post(
+            self.analysis_url,
+            self.valid_data,
+            follow=True
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(SMSAnalysis.objects.count(), 1)
+
+        analysis = SMSAnalysis.objects.get(user=self.user)
+
+        self.assertEqual(analysis.prediction, "not_spam")
+        self.assertEqual(
+            analysis.message,
+            self.valid_data["message"]
+        )
+        self.assertEqual(float(analysis.confidence), 97.0)
+
+        result = response.context["result"]
+
+        self.assertEqual(result["prediction"], 0)
+        self.assertEqual(result["label"], "Not Spam")
