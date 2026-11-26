@@ -1,0 +1,51 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhishGuard</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">🛡️ PhishGuard</div>
+            <p>Check before you trust.</p>
+        </header>
+
+        <main>
+            <label for="message">Suspicious message or conversation</label>
+
+            <textarea
+                id="message"
+                placeholder="Paste a suspicious message or select text on a webpage..."
+            ></textarea>
+
+            <button id="analyzeButton">Analyze Message</button>
+
+            <div id="result" class="result hidden">
+                <h3 id="prediction"></h3>
+                <p id="confidence"></p>
+
+                <div class="analysis-section">
+                    <h4>Why was this message flagged?</h4>
+                    <p id="explanation"></p>
+                </div>
+
+                <div class="analysis-section">
+                    <h4>URL Security Analysis</h4>
+                    <p id="urlRisk"></p>
+                    <ul id="urlFindings"></ul>
+                </div>
+            </div>
+
+            <p class="disclaimer">
+                AI predictions are not guarantees. Always verify suspicious messages.
+            </p>
+        </main>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
